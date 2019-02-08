@@ -100,9 +100,16 @@
       <description>
 
 
+&lt;p&gt;&lt;em&gt;This post is the first of a series of short tutorials on how to approach statistical analyses common among social psychologist using Bayesian approach and R package - brms&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;Moderation analysis is one the most widely used tools to approach interactions in regression models with at least 1 continuous term. Its popularity has outbursted since the release of an SPSS/SAS macro &lt;a href=&#34;https://www.processmacro.org/&#34;&gt;PROCESS&lt;/a&gt;. PROCESS is easy to use and allows to fit a variety of models. However, it lacks certain capabilities (like ability to fit multilevel models or generalized regression models or mix of both). Also PROCESS cannot handle Bayesian moderation analysis. One can use &lt;a href=&#34;https://jasp-stats.org/&#34;&gt;JASP&lt;/a&gt; to conduct Baysian regression analysis with interaction terms, but sadly it’s post-processing capabilities are quite limited (at least to me).&lt;/p&gt;
+&lt;p&gt;In this post I will show, how to easily and in just a few steps fit Bayesian moderation model in R. As some of my colleagues admitted lack of R package that would replace PROCESS is one of the major factors that restrains them from swapping SPSS with R. Actually there are certain packages that aspire to replace PROCESS in R. Here, however I would to show you that you don’t need to use a specialized package and you can go on with a quite general one - &lt;code&gt;brms&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Lets start with something relatively simple and easy to follow.&lt;/p&gt;
 &lt;div id=&#34;continuous-and-categorical-predictors&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Continuous and categorical predictors&lt;/h2&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In this post I will extensively use &lt;code&gt;tidyverse&lt;/code&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# install.packages(&amp;quot;tidyverse&amp;quot;)
+# install.packages(&amp;quot;carData&amp;quot;)
+library(tidyverse)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## ── Attaching packages ──────────────────────────────────────────────────────────── tidyverse 1.2.1 ──&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## ✔ ggplot2 3.1.0     ✔ purrr   0.3.0
 ## ✔ tibble  2.0.1     ✔ dplyr   0.7.8
@@ -111,8 +118,10 @@
 &lt;pre&gt;&lt;code&gt;## ── Conflicts ─────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(carData)
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(carData) # for an example dataset
+
 data(Moore)
+
 Moore %&amp;gt;% 
   glimpse()&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Observations: 45
@@ -121,18 +130,23 @@ Moore %&amp;gt;%
 ## $ conformity     &amp;lt;int&amp;gt; 8, 4, 8, 7, 10, 6, 12, 4, 13, 12, 4, 13, 7, 9, 9,…
 ## $ fcategory      &amp;lt;fct&amp;gt; low, high, high, low, low, low, medium, medium, l…
 ## $ fscore         &amp;lt;int&amp;gt; 37, 57, 65, 20, 36, 18, 51, 44, 31, 36, 42, 56, 2…&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;By default contrast are set to &lt;code&gt;contr.treatment&lt;/code&gt;. This means that a &lt;span class=&#34;math inline&#34;&gt;\(j\)&lt;/span&gt; regression coefficient a categorical variable is interpreted as a difference of means between a level &lt;span class=&#34;math inline&#34;&gt;\(j+1\)&lt;/span&gt; of the variable and a reference level &lt;span class=&#34;math inline&#34;&gt;\(1\)&lt;/span&gt;.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;contrasts(Moore$partner.status)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##      low
 ## high   0
 ## low    1&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We switch contrasts to &lt;code&gt;contr.sum&lt;/code&gt; for the categorical variable.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;contrasts(Moore$partner.status) &amp;lt;- &amp;quot;contr.sum&amp;quot;
 contrasts(Moore$partner.status)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##      [,1]
 ## high    1
 ## low    -1&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We standardize the continuous variable - fscore.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;Moore %&amp;gt;% 
-  mutate(fscore_c = fscore - mean(fscore)) -&amp;gt; Moore&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(brms)&lt;/code&gt;&lt;/pre&gt;
+  mutate(fscore_c = (fscore - mean(fscore))/sd(fscore)) -&amp;gt; Moore&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We fit our model with &lt;code&gt;brms&lt;/code&gt; package. Both installation and fitting may take a while.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# install.packages(&amp;quot;brms&amp;quot;)
+library(brms)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Ładowanie wymaganego pakietu: Rcpp&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Loading &amp;#39;brms&amp;#39; package (version 2.7.0). Useful instructions
 ## can be found by typing help(&amp;#39;brms&amp;#39;). A more detailed introduction
@@ -145,6 +159,7 @@ fit1 &amp;lt;-
       chains = 4, cores = 4)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Compiling the C++ model&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Start sampling&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Here we can print summary of posterior distribution of coefficients.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fit1&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##  Family: gaussian 
 ##   Links: mu = identity; sigma = identity 
@@ -155,10 +170,10 @@ fit1 &amp;lt;-
 ## 
 ## Population-Level Effects: 
 ##                          Estimate Est.Error l-95% CI u-95% CI Eff.Sample
-## Intercept                   12.15      0.71    10.79    13.52       4859
-## partner.status1              2.14      0.72     0.69     3.58       5111
-## fscore_c                    -0.02      0.05    -0.12     0.08       5416
-## partner.status1:fscore_c    -0.13      0.05    -0.23    -0.03       4663
+## Intercept                   12.14      0.71    10.74    13.51       5360
+## partner.status1              2.14      0.75     0.73     3.61       4525
+## fscore_c                    -0.30      0.72    -1.75     1.13       4769
+## partner.status1:fscore_c    -1.86      0.71    -3.25    -0.43       4464
 ##                          Rhat
 ## Intercept                1.00
 ## partner.status1          1.00
@@ -167,13 +182,16 @@ fit1 &amp;lt;-
 ## 
 ## Family Specific Parameters: 
 ##       Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma     4.69      0.53     3.79     5.82       4094 1.00
+## sigma     4.70      0.54     3.80     5.89       3795 1.00
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Here we print simple slopes.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;marginal_effects(fit1, &amp;quot;partner.status:fscore_c&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;&lt;img src=&#34;/post/rmarkdown_files/figure-html/unnamed-chunk-7-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;marginal_effects(fit1, &amp;quot;fscore_c:partner.status&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/rmarkdown_files/figure-html/unnamed-chunk-8-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
 &lt;/div&gt;
 </description>
     </item>

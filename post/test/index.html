@@ -28,7 +28,8 @@
   
     
   
-  <meta name="description" content="Continuous and categorical predictors library(tidyverse) ## ── Attaching packages ──────────────────────────────────────────────────────────── tidyverse 1.2.1 ── ## ✔ ggplot2 3.1.0 ✔ purrr 0.3.0 ## ✔ tibble 2.0.1 ✔ dplyr 0.7.8 ## ✔ tidyr 0.8.2 ✔ stringr 1.3.1 ## ✔ readr 1.3.1 ✔ forcats 0.3.0 ## ── Conflicts ─────────────────────────────────────────────────────────────── tidyverse_conflicts() ── ## ✖ dplyr::filter() masks stats::filter() ## ✖ dplyr::lag() masks stats::lag() library(carData) data(Moore) Moore %&gt;% glimpse() ## Observations: 45 ## Variables: 4 ## $ partner.">
+  <meta name="description" content="This post is the first of a series of short tutorials on how to approach statistical analyses common among social psychologist using Bayesian approach and R package - brms
+Moderation analysis is one the most widely used tools to approach interactions in regression models with at least 1 continuous term. Its popularity has outbursted since the release of an SPSS/SAS macro PROCESS. PROCESS is easy to use and allows to fit a variety of models.">
 
   
   <link rel="alternate" hreflang="en-us" href="/post/test/">
@@ -123,7 +124,8 @@
   <meta property="og:site_name" content="Wiktor Soral">
   <meta property="og:url" content="/post/test/">
   <meta property="og:title" content="Bayesian moderation analysis | Wiktor Soral">
-  <meta property="og:description" content="Continuous and categorical predictors library(tidyverse) ## ── Attaching packages ──────────────────────────────────────────────────────────── tidyverse 1.2.1 ── ## ✔ ggplot2 3.1.0 ✔ purrr 0.3.0 ## ✔ tibble 2.0.1 ✔ dplyr 0.7.8 ## ✔ tidyr 0.8.2 ✔ stringr 1.3.1 ## ✔ readr 1.3.1 ✔ forcats 0.3.0 ## ── Conflicts ─────────────────────────────────────────────────────────────── tidyverse_conflicts() ── ## ✖ dplyr::filter() masks stats::filter() ## ✖ dplyr::lag() masks stats::lag() library(carData) data(Moore) Moore %&gt;% glimpse() ## Observations: 45 ## Variables: 4 ## $ partner."><meta property="og:image" content="/img/icon-192.png">
+  <meta property="og:description" content="This post is the first of a series of short tutorials on how to approach statistical analyses common among social psychologist using Bayesian approach and R package - brms
+Moderation analysis is one the most widely used tools to approach interactions in regression models with at least 1 continuous term. Its popularity has outbursted since the release of an SPSS/SAS macro PROCESS. PROCESS is easy to use and allows to fit a variety of models."><meta property="og:image" content="/img/icon-192.png">
   <meta property="og:locale" content="en-us">
   
   
@@ -328,7 +330,7 @@
   
   <span class="middot-divider"></span>
   <span class="article-reading-time">
-    2 min read
+    4 min read
   </span>
   
 
@@ -410,9 +412,16 @@
       
 
 
+<p><em>This post is the first of a series of short tutorials on how to approach statistical analyses common among social psychologist using Bayesian approach and R package - brms</em></p>
+<p>Moderation analysis is one the most widely used tools to approach interactions in regression models with at least 1 continuous term. Its popularity has outbursted since the release of an SPSS/SAS macro <a href="https://www.processmacro.org/">PROCESS</a>. PROCESS is easy to use and allows to fit a variety of models. However, it lacks certain capabilities (like ability to fit multilevel models or generalized regression models or mix of both). Also PROCESS cannot handle Bayesian moderation analysis. One can use <a href="https://jasp-stats.org/">JASP</a> to conduct Baysian regression analysis with interaction terms, but sadly it’s post-processing capabilities are quite limited (at least to me).</p>
+<p>In this post I will show, how to easily and in just a few steps fit Bayesian moderation model in R. As some of my colleagues admitted lack of R package that would replace PROCESS is one of the major factors that restrains them from swapping SPSS with R. Actually there are certain packages that aspire to replace PROCESS in R. Here, however I would to show you that you don’t need to use a specialized package and you can go on with a quite general one - <code>brms</code>.</p>
+<p>Lets start with something relatively simple and easy to follow.</p>
 <div id="continuous-and-categorical-predictors" class="section level2">
 <h2>Continuous and categorical predictors</h2>
-<pre class="r"><code>library(tidyverse)</code></pre>
+<p>In this post I will extensively use <code>tidyverse</code>.</p>
+<pre class="r"><code># install.packages(&quot;tidyverse&quot;)
+# install.packages(&quot;carData&quot;)
+library(tidyverse)</code></pre>
 <pre><code>## ── Attaching packages ──────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
 <pre><code>## ✔ ggplot2 3.1.0     ✔ purrr   0.3.0
 ## ✔ tibble  2.0.1     ✔ dplyr   0.7.8
@@ -421,8 +430,10 @@
 <pre><code>## ── Conflicts ─────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## ✖ dplyr::filter() masks stats::filter()
 ## ✖ dplyr::lag()    masks stats::lag()</code></pre>
-<pre class="r"><code>library(carData)
+<pre class="r"><code>library(carData) # for an example dataset
+
 data(Moore)
+
 Moore %&gt;% 
   glimpse()</code></pre>
 <pre><code>## Observations: 45
@@ -431,18 +442,23 @@ Moore %&gt;%
 ## $ conformity     &lt;int&gt; 8, 4, 8, 7, 10, 6, 12, 4, 13, 12, 4, 13, 7, 9, 9,…
 ## $ fcategory      &lt;fct&gt; low, high, high, low, low, low, medium, medium, l…
 ## $ fscore         &lt;int&gt; 37, 57, 65, 20, 36, 18, 51, 44, 31, 36, 42, 56, 2…</code></pre>
+<p>By default contrast are set to <code>contr.treatment</code>. This means that a <span class="math inline">\(j\)</span> regression coefficient a categorical variable is interpreted as a difference of means between a level <span class="math inline">\(j+1\)</span> of the variable and a reference level <span class="math inline">\(1\)</span>.</p>
 <pre class="r"><code>contrasts(Moore$partner.status)</code></pre>
 <pre><code>##      low
 ## high   0
 ## low    1</code></pre>
+<p>We switch contrasts to <code>contr.sum</code> for the categorical variable.</p>
 <pre class="r"><code>contrasts(Moore$partner.status) &lt;- &quot;contr.sum&quot;
 contrasts(Moore$partner.status)</code></pre>
 <pre><code>##      [,1]
 ## high    1
 ## low    -1</code></pre>
+<p>We standardize the continuous variable - fscore.</p>
 <pre class="r"><code>Moore %&gt;% 
-  mutate(fscore_c = fscore - mean(fscore)) -&gt; Moore</code></pre>
-<pre class="r"><code>library(brms)</code></pre>
+  mutate(fscore_c = (fscore - mean(fscore))/sd(fscore)) -&gt; Moore</code></pre>
+<p>We fit our model with <code>brms</code> package. Both installation and fitting may take a while.</p>
+<pre class="r"><code># install.packages(&quot;brms&quot;)
+library(brms)</code></pre>
 <pre><code>## Ładowanie wymaganego pakietu: Rcpp</code></pre>
 <pre><code>## Loading &#39;brms&#39; package (version 2.7.0). Useful instructions
 ## can be found by typing help(&#39;brms&#39;). A more detailed introduction
@@ -455,6 +471,7 @@ fit1 &lt;-
       chains = 4, cores = 4)</code></pre>
 <pre><code>## Compiling the C++ model</code></pre>
 <pre><code>## Start sampling</code></pre>
+<p>Here we can print summary of posterior distribution of coefficients.</p>
 <pre class="r"><code>fit1</code></pre>
 <pre><code>##  Family: gaussian 
 ##   Links: mu = identity; sigma = identity 
@@ -465,10 +482,10 @@ fit1 &lt;-
 ## 
 ## Population-Level Effects: 
 ##                          Estimate Est.Error l-95% CI u-95% CI Eff.Sample
-## Intercept                   12.15      0.71    10.79    13.52       4859
-## partner.status1              2.14      0.72     0.69     3.58       5111
-## fscore_c                    -0.02      0.05    -0.12     0.08       5416
-## partner.status1:fscore_c    -0.13      0.05    -0.23    -0.03       4663
+## Intercept                   12.14      0.71    10.74    13.51       5360
+## partner.status1              2.14      0.75     0.73     3.61       4525
+## fscore_c                    -0.30      0.72    -1.75     1.13       4769
+## partner.status1:fscore_c    -1.86      0.71    -3.25    -0.43       4464
 ##                          Rhat
 ## Intercept                1.00
 ## partner.status1          1.00
@@ -477,13 +494,16 @@ fit1 &lt;-
 ## 
 ## Family Specific Parameters: 
 ##       Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma     4.69      0.53     3.79     5.82       4094 1.00
+## sigma     4.70      0.54     3.80     5.89       3795 1.00
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Here we print simple slopes.</p>
 <pre class="r"><code>marginal_effects(fit1, &quot;partner.status:fscore_c&quot;)</code></pre>
 <p><img src="/post/rmarkdown_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre class="r"><code>marginal_effects(fit1, &quot;fscore_c:partner.status&quot;)</code></pre>
+<p><img src="/post/rmarkdown_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
 </div>
 
     </div>
@@ -493,7 +513,7 @@ fit1 &lt;-
 
 <div class="article-tags">
   
-  <a class="badge badge-light" href="/tags/test/">Test</a>
+  <a class="badge badge-light" href="/tags/bayesian/">Bayesian</a>
   
 </div>
 
