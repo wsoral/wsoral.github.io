@@ -421,16 +421,8 @@ Moderation analysis is one the most widely used tools to approach interactions i
 <p>In this post I will extensively use <code>tidyverse</code>.</p>
 <pre class="r"><code># install.packages(&quot;tidyverse&quot;)
 # install.packages(&quot;carData&quot;)
-library(tidyverse)</code></pre>
-<pre><code>## ── Attaching packages ──────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
-<pre><code>## ✔ ggplot2 3.1.0     ✔ purrr   0.3.0
-## ✔ tibble  2.0.1     ✔ dplyr   0.7.8
-## ✔ tidyr   0.8.2     ✔ stringr 1.3.1
-## ✔ readr   1.3.1     ✔ forcats 0.3.0</code></pre>
-<pre><code>## ── Conflicts ─────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()</code></pre>
-<pre class="r"><code>library(carData) # for an example dataset
+library(tidyverse)
+library(carData) # for an example dataset
 
 data(Moore)
 
@@ -457,53 +449,128 @@ contrasts(Moore$partner.status)</code></pre>
 <pre class="r"><code>Moore %&gt;% 
   mutate(fscore_c = (fscore - mean(fscore))/sd(fscore)) -&gt; Moore</code></pre>
 <p>We fit our model with <code>brms</code> package. Both installation and fitting may take a while.</p>
+<pre class="r"><code>library(brms)
+theme_set(theme_default())</code></pre>
+<p>We will use weakly informative priors for regression coefficients. By defaults <code>brms</code> uses robust Student-t prior for model error. <em>Robust</em> means here robust to potential outliers.</p>
+<pre class="r"><code>prior &lt;- prior(normal(0, 10), class = b)</code></pre>
+<p>Fitting is quite straigthforward. If your run your model on your laptop with less than 4 cores, it is better to change the value of <code>cores</code> to 2 or even 1.</p>
 <pre class="r"><code># install.packages(&quot;brms&quot;)
-library(brms)</code></pre>
-<pre><code>## Ładowanie wymaganego pakietu: Rcpp</code></pre>
-<pre><code>## Loading &#39;brms&#39; package (version 2.7.0). Useful instructions
-## can be found by typing help(&#39;brms&#39;). A more detailed introduction
-## to the package is available through vignette(&#39;brms_overview&#39;).
-## Run theme_set(theme_default()) to use the default bayesplot theme.</code></pre>
-<pre class="r"><code>theme_set(theme_default())
+
 fit1 &lt;- 
   brm(data = Moore,
       conformity ~ partner.status * fscore_c, ## means partner.status + fscore_c + partner.status:fscore_c
+      prior = prior, sample_prior = T,
       chains = 4, cores = 4)</code></pre>
-<pre><code>## Compiling the C++ model</code></pre>
-<pre><code>## Start sampling</code></pre>
-<p>Here we can print summary of posterior distribution of coefficients.</p>
-<pre class="r"><code>fit1</code></pre>
-<pre><code>##  Family: gaussian 
-##   Links: mu = identity; sigma = identity 
-## Formula: conformity ~ partner.status * fscore_c 
-##    Data: Moore (Number of observations: 45) 
-## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
-##          total post-warmup samples = 4000
-## 
-## Population-Level Effects: 
-##                          Estimate Est.Error l-95% CI u-95% CI Eff.Sample
-## Intercept                   12.14      0.71    10.74    13.51       5360
-## partner.status1              2.14      0.75     0.73     3.61       4525
-## fscore_c                    -0.30      0.72    -1.75     1.13       4769
-## partner.status1:fscore_c    -1.86      0.71    -3.25    -0.43       4464
-##                          Rhat
-## Intercept                1.00
-## partner.status1          1.00
-## fscore_c                 1.00
-## partner.status1:fscore_c 1.00
-## 
-## Family Specific Parameters: 
-##       Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma     4.70      0.54     3.80     5.89       3795 1.00
-## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
-## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>We can start with printing summary of posterior distribution of our model’s coefficients.</p>
+<pre class="r"><code>fit1 %&gt;% 
+  posterior_summary() %&gt;% 
+  knitr::kable(digits = 2)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">Estimate</th>
+<th align="right">Est.Error</th>
+<th align="right">Q2.5</th>
+<th align="right">Q97.5</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>b_Intercept</td>
+<td align="right">12.14</td>
+<td align="right">0.71</td>
+<td align="right">10.71</td>
+<td align="right">13.58</td>
+</tr>
+<tr class="even">
+<td>b_partner.status1</td>
+<td align="right">2.12</td>
+<td align="right">0.72</td>
+<td align="right">0.74</td>
+<td align="right">3.52</td>
+</tr>
+<tr class="odd">
+<td>b_fscore_c</td>
+<td align="right">-0.29</td>
+<td align="right">0.72</td>
+<td align="right">-1.73</td>
+<td align="right">1.12</td>
+</tr>
+<tr class="even">
+<td>b_partner.status1:fscore_c</td>
+<td align="right">-1.85</td>
+<td align="right">0.72</td>
+<td align="right">-3.25</td>
+<td align="right">-0.41</td>
+</tr>
+<tr class="odd">
+<td>sigma</td>
+<td align="right">4.70</td>
+<td align="right">0.55</td>
+<td align="right">3.78</td>
+<td align="right">5.95</td>
+</tr>
+<tr class="even">
+<td>prior_b</td>
+<td align="right">-0.11</td>
+<td align="right">9.85</td>
+<td align="right">-19.02</td>
+<td align="right">19.07</td>
+</tr>
+<tr class="odd">
+<td>prior_sigma</td>
+<td align="right">11.33</td>
+<td align="right">13.44</td>
+<td align="right">0.36</td>
+<td align="right">44.93</td>
+</tr>
+<tr class="even">
+<td>lp__</td>
+<td align="right">-147.04</td>
+<td align="right">1.75</td>
+<td align="right">-151.48</td>
+<td align="right">-144.79</td>
+</tr>
+</tbody>
+</table>
+<p>Compare it to our prior distribution.</p>
+<pre class="r"><code>prior_summary(fit1)</code></pre>
+<pre><code>##                  prior     class                     coef group resp dpar
+## 1        normal(0, 10)         b                                         
+## 2                              b                 fscore_c                
+## 3                              b          partner.status1                
+## 4                              b partner.status1:fscore_c                
+## 5 student_t(3, 12, 10) Intercept                                         
+## 6  student_t(3, 0, 10)     sigma                                         
+##   nlpar bound
+## 1            
+## 2            
+## 3            
+## 4            
+## 5            
+## 6</code></pre>
 <p>Here we print simple slopes.</p>
 <pre class="r"><code>marginal_effects(fit1, &quot;partner.status:fscore_c&quot;)</code></pre>
-<p><img src="/post/rmarkdown_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p><img src="/post/rmarkdown_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
 <pre class="r"><code>marginal_effects(fit1, &quot;fscore_c:partner.status&quot;)</code></pre>
-<p><img src="/post/rmarkdown_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p><img src="/post/rmarkdown_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>We print the results of simple slopes analysis.</p>
+<pre class="r"><code>hypothesis(fit1, c(highF=&quot;partner.status1 + partner.status1:fscore_c = 0&quot;,
+                   mediumF=&quot;partner.status1 = 0&quot;,
+                   lowF=&quot;partner.status1 - partner.status1:fscore_c = 0&quot;))</code></pre>
+<pre><code>## Hypothesis Tests for class b:
+##   Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio Post.Prob
+## 1      highF     0.27      1.01    -1.73     2.30      13.80      0.93
+## 2    mediumF     2.12      0.72     0.74     3.52       0.20      0.16
+## 3       lowF     3.98      1.02     1.99     5.98       0.01      0.01
+##   Star
+## 1     
+## 2    *
+## 3    *
+## ---
+## &#39;*&#39;: The expected value under the hypothesis lies outside the 95%-CI.
+## Posterior probabilities of point hypotheses assume equal prior probabilities.</code></pre>
 </div>
 
     </div>
