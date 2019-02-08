@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Authors on Wiktor Soral</title>
+    <link>/authors/</link>
+    <description>Recent content in Authors on Wiktor Soral</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 01 Dec 2018 00:00:00 +0100</lastBuildDate>
+    
+	<atom:link href="/authors/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Aleksandra Cichocka</title>
+      <link>/authors/aleksandra-cichocka/</link>
+      <pubDate>Sat, 01 Dec 2018 00:00:00 +0100</pubDate>
+      
+      <guid>/authors/aleksandra-cichocka/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Marta Marchlewska</title>
+      <link>/authors/marta-marchlewska/</link>
+      <pubDate>Sat, 01 Dec 2018 00:00:00 +0100</pubDate>
+      
+      <guid>/authors/marta-marchlewska/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Michał Bilewicz</title>
+      <link>/authors/micha%C5%82-bilewicz/</link>
+      <pubDate>Sat, 01 Dec 2018 00:00:00 +0100</pubDate>
+      
+      <guid>/authors/micha%C5%82-bilewicz/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Mikołaj Winiewski</title>
+      <link>/authors/miko%C5%82aj-winiewski/</link>
+      <pubDate>Thu, 02 Nov 2017 00:00:00 +0100</pubDate>
+      
+      <guid>/authors/miko%C5%82aj-winiewski/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Olga Kamińska</title>
+      <link>/authors/olga-kami%C5%84ska/</link>
+      <pubDate>Mon, 30 Oct 2017 00:00:00 +0100</pubDate>
+      
+      <guid>/authors/olga-kami%C5%84ska/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Wiktor Soral</title>
+      <link>/authors/wiktor-soral/</link>
+      <pubDate>Sat, 01 Dec 2018 00:00:00 +0100</pubDate>
+      
+      <guid>/authors/wiktor-soral/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

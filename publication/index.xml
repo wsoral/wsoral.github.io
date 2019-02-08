@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Publications on Wiktor Soral</title>
+    <link>/publication/</link>
+    <description>Recent content in Publications on Wiktor Soral</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 01 Dec 2018 00:00:00 +0100</lastBuildDate>
+    
+	<atom:link href="/publication/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>The Collective Conspiracy Mentality in Poland</title>
+      <link>/publication/uscinski-chapter/</link>
+      <pubDate>Sat, 01 Dec 2018 00:00:00 +0100</pubDate>
+      
+      <guid>/publication/uscinski-chapter/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Exposure to hate speech increases prejudice through desensitization</title>
+      <link>/publication/exposure_ab/</link>
+      <pubDate>Thu, 02 Nov 2017 00:00:00 +0100</pubDate>
+      
+      <guid>/publication/exposure_ab/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>From disgust to contempt-speech: The nature of contempt on the map of prejudicial emotions</title>
+      <link>/publication/disgust_bbs/</link>
+      <pubDate>Mon, 30 Oct 2017 00:00:00 +0100</pubDate>
+      
+      <guid>/publication/disgust_bbs/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>When Authoritarians Confront Prejudice. Differential Effects of SDO and RWA on Support for Hate-Speech Prohibition</title>
+      <link>/publication/when_auth_pp/</link>
+      <pubDate>Thu, 12 Nov 2015 00:00:00 +0100</pubDate>
+      
+      <guid>/publication/when_auth_pp/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
