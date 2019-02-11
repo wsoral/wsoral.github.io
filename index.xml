@@ -6,8 +6,180 @@
     <description>Recent content in Wiktor Soral on Wiktor Soral</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 01 Dec 2018 00:00:00 +0100</lastBuildDate>
+    <lastBuildDate>Mon, 11 Feb 2019 00:00:00 +0000</lastBuildDate>
     <atom:link href="/" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Bayesian moderation analysis</title>
+      <link>/post/test/</link>
+      <pubDate>Mon, 11 Feb 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/test/</guid>
+      <description>
+
+
+&lt;p&gt;&lt;em&gt;This post is the first of a series of short tutorials on how to approach statistical analyses common among social psychologist using Bayesian approach and R package - brms&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;Moderation analysis is one the most widely used tools to approach interactions in regression models with at least 1 continuous term. Its popularity has outbursted since the release of an SPSS/SAS macro &lt;a href=&#34;https://www.processmacro.org/&#34;&gt;PROCESS&lt;/a&gt;. PROCESS is easy to use and allows to fit a variety of models. However, it lacks certain capabilities (like ability to fit multilevel models or generalized regression models or mix of both). Also PROCESS cannot handle Bayesian moderation analysis. One can use &lt;a href=&#34;https://jasp-stats.org/&#34;&gt;JASP&lt;/a&gt; to conduct Baysian regression analysis with interaction terms, but sadly it’s post-processing capabilities are quite limited (at least to me).&lt;/p&gt;
+&lt;p&gt;In this post I will show, how to easily and in just a few steps fit Bayesian moderation model in R. As some of my colleagues admitted lack of R package that would replace PROCESS is one of the major factors that restrains them from swapping SPSS with R. Actually there are certain packages that aspire to replace PROCESS in R. Here, however I would to show you that you don’t need to use a specialized package and you can go on with a quite general one - &lt;code&gt;brms&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Lets start with something relatively simple and easy to follow.&lt;/p&gt;
+&lt;div id=&#34;continuous-and-categorical-predictors&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Continuous and categorical predictors&lt;/h2&gt;
+&lt;p&gt;In this post I will extensively use &lt;code&gt;tidyverse&lt;/code&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# install.packages(&amp;quot;tidyverse&amp;quot;)
+# install.packages(&amp;quot;carData&amp;quot;)
+library(tidyverse)
+library(carData) # for an example dataset
+
+data(Moore)
+
+Moore %&amp;gt;% 
+  glimpse()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Observations: 45
+## Variables: 4
+## $ partner.status &amp;lt;fct&amp;gt; low, low, low, low, low, low, low, low, low, low,…
+## $ conformity     &amp;lt;int&amp;gt; 8, 4, 8, 7, 10, 6, 12, 4, 13, 12, 4, 13, 7, 9, 9,…
+## $ fcategory      &amp;lt;fct&amp;gt; low, high, high, low, low, low, medium, medium, l…
+## $ fscore         &amp;lt;int&amp;gt; 37, 57, 65, 20, 36, 18, 51, 44, 31, 36, 42, 56, 2…&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;By default contrast are set to &lt;code&gt;contr.treatment&lt;/code&gt;. This means that a &lt;span class=&#34;math inline&#34;&gt;\(j\)&lt;/span&gt; regression coefficient a categorical variable is interpreted as a difference of means between a level &lt;span class=&#34;math inline&#34;&gt;\(j+1\)&lt;/span&gt; of the variable and a reference level &lt;span class=&#34;math inline&#34;&gt;\(1\)&lt;/span&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;contrasts(Moore$partner.status)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##      low
+## high   0
+## low    1&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We switch contrasts to &lt;code&gt;contr.sum&lt;/code&gt; for the categorical variable.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;contrasts(Moore$partner.status) &amp;lt;- &amp;quot;contr.sum&amp;quot;
+contrasts(Moore$partner.status)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##      [,1]
+## high    1
+## low    -1&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We standardize the continuous variable - fscore.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;Moore %&amp;gt;% 
+  mutate(fscore_c = (fscore - mean(fscore))/sd(fscore)) -&amp;gt; Moore&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We fit our model with &lt;code&gt;brms&lt;/code&gt; package. Both installation and fitting may take a while.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(brms)
+theme_set(theme_default())&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We will use weakly informative priors for regression coefficients. By defaults &lt;code&gt;brms&lt;/code&gt; uses robust Student-t prior for model error. &lt;em&gt;Robust&lt;/em&gt; means here robust to potential outliers.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;prior &amp;lt;- prior(normal(0, 10), class = b)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Fitting is quite straigthforward. If your run your model on your laptop with less than 4 cores, it is better to change the value of &lt;code&gt;cores&lt;/code&gt; to 2 or even 1.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# install.packages(&amp;quot;brms&amp;quot;)
+
+fit1 &amp;lt;- 
+  brm(data = Moore,
+      conformity ~ partner.status * fscore_c, ## means partner.status + fscore_c + partner.status:fscore_c
+      prior = prior, sample_prior = T,
+      chains = 4, cores = 4)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We can start with printing summary of posterior distribution of our model’s coefficients.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fit1 %&amp;gt;% 
+  posterior_summary() %&amp;gt;% 
+  knitr::kable(digits = 2)&lt;/code&gt;&lt;/pre&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr class=&#34;header&#34;&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Estimate&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Est.Error&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Q2.5&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Q97.5&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td&gt;b_Intercept&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;12.13&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.70&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;10.66&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;13.52&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td&gt;b_partner.status1&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;2.13&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.68&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.79&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;3.51&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td&gt;b_fscore_c&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.29&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.69&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-1.64&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1.09&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td&gt;b_partner.status1:fscore_c&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-1.85&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.72&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-3.23&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.46&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td&gt;sigma&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;4.68&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.54&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;3.78&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;5.86&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td&gt;prior_b&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.17&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;9.95&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-19.51&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;19.47&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td&gt;prior_sigma&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;11.28&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;14.81&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.33&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;42.49&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td&gt;lp__&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-146.92&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1.64&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-151.02&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-144.77&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Compare it to our prior distribution.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;prior_summary(fit1)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##                  prior     class                     coef group resp dpar
+## 1        normal(0, 10)         b                                         
+## 2                              b                 fscore_c                
+## 3                              b          partner.status1                
+## 4                              b partner.status1:fscore_c                
+## 5 student_t(3, 12, 10) Intercept                                         
+## 6  student_t(3, 0, 10)     sigma                                         
+##   nlpar bound
+## 1            
+## 2            
+## 3            
+## 4            
+## 5            
+## 6&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Here we print simple slopes.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;marginal_effects(fit1, &amp;quot;partner.status:fscore_c&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/rmarkdown_files/figure-html/unnamed-chunk-10-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;marginal_effects(fit1, &amp;quot;fscore_c:partner.status&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/rmarkdown_files/figure-html/unnamed-chunk-11-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;We print the results of simple slopes analysis.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;hypothesis(fit1, c(highF=&amp;quot;partner.status1 + partner.status1:fscore_c = 0&amp;quot;,
+                   mediumF=&amp;quot;partner.status1 = 0&amp;quot;,
+                   lowF=&amp;quot;partner.status1 - partner.status1:fscore_c = 0&amp;quot;))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Hypothesis Tests for class b:
+##   Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio Post.Prob
+## 1      highF     0.28      0.98    -1.66     2.17      13.63      0.93
+## 2    mediumF     2.13      0.68     0.79     3.51       0.13      0.11
+## 3       lowF     3.98      1.00     2.01     6.00       0.02      0.02
+##   Star
+## 1     
+## 2    *
+## 3    *
+## ---
+## &amp;#39;*&amp;#39;: The expected value under the hypothesis lies outside the 95%-CI.
+## Posterior probabilities of point hypotheses assume equal prior probabilities.&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+</description>
+    </item>
     
     <item>
       <title>The Collective Conspiracy Mentality in Poland</title>
@@ -89,178 +261,6 @@
       
       <guid>/publication/when_auth_pp/</guid>
       <description></description>
-    </item>
-    
-    <item>
-      <title>Bayesian moderation analysis</title>
-      <link>/post/test/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/post/test/</guid>
-      <description>
-
-
-&lt;p&gt;&lt;em&gt;This post is the first of a series of short tutorials on how to approach statistical analyses common among social psychologist using Bayesian approach and R package - brms&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;Moderation analysis is one the most widely used tools to approach interactions in regression models with at least 1 continuous term. Its popularity has outbursted since the release of an SPSS/SAS macro &lt;a href=&#34;https://www.processmacro.org/&#34;&gt;PROCESS&lt;/a&gt;. PROCESS is easy to use and allows to fit a variety of models. However, it lacks certain capabilities (like ability to fit multilevel models or generalized regression models or mix of both). Also PROCESS cannot handle Bayesian moderation analysis. One can use &lt;a href=&#34;https://jasp-stats.org/&#34;&gt;JASP&lt;/a&gt; to conduct Baysian regression analysis with interaction terms, but sadly it’s post-processing capabilities are quite limited (at least to me).&lt;/p&gt;
-&lt;p&gt;In this post I will show, how to easily and in just a few steps fit Bayesian moderation model in R. As some of my colleagues admitted lack of R package that would replace PROCESS is one of the major factors that restrains them from swapping SPSS with R. Actually there are certain packages that aspire to replace PROCESS in R. Here, however I would to show you that you don’t need to use a specialized package and you can go on with a quite general one - &lt;code&gt;brms&lt;/code&gt;.&lt;/p&gt;
-&lt;p&gt;Lets start with something relatively simple and easy to follow.&lt;/p&gt;
-&lt;div id=&#34;continuous-and-categorical-predictors&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Continuous and categorical predictors&lt;/h2&gt;
-&lt;p&gt;In this post I will extensively use &lt;code&gt;tidyverse&lt;/code&gt;.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# install.packages(&amp;quot;tidyverse&amp;quot;)
-# install.packages(&amp;quot;carData&amp;quot;)
-library(tidyverse)
-library(carData) # for an example dataset
-
-data(Moore)
-
-Moore %&amp;gt;% 
-  glimpse()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## Observations: 45
-## Variables: 4
-## $ partner.status &amp;lt;fct&amp;gt; low, low, low, low, low, low, low, low, low, low,…
-## $ conformity     &amp;lt;int&amp;gt; 8, 4, 8, 7, 10, 6, 12, 4, 13, 12, 4, 13, 7, 9, 9,…
-## $ fcategory      &amp;lt;fct&amp;gt; low, high, high, low, low, low, medium, medium, l…
-## $ fscore         &amp;lt;int&amp;gt; 37, 57, 65, 20, 36, 18, 51, 44, 31, 36, 42, 56, 2…&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;By default contrast are set to &lt;code&gt;contr.treatment&lt;/code&gt;. This means that a &lt;span class=&#34;math inline&#34;&gt;\(j\)&lt;/span&gt; regression coefficient a categorical variable is interpreted as a difference of means between a level &lt;span class=&#34;math inline&#34;&gt;\(j+1\)&lt;/span&gt; of the variable and a reference level &lt;span class=&#34;math inline&#34;&gt;\(1\)&lt;/span&gt;.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;contrasts(Moore$partner.status)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##      low
-## high   0
-## low    1&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;We switch contrasts to &lt;code&gt;contr.sum&lt;/code&gt; for the categorical variable.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;contrasts(Moore$partner.status) &amp;lt;- &amp;quot;contr.sum&amp;quot;
-contrasts(Moore$partner.status)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##      [,1]
-## high    1
-## low    -1&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;We standardize the continuous variable - fscore.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;Moore %&amp;gt;% 
-  mutate(fscore_c = (fscore - mean(fscore))/sd(fscore)) -&amp;gt; Moore&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;We fit our model with &lt;code&gt;brms&lt;/code&gt; package. Both installation and fitting may take a while.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(brms)
-theme_set(theme_default())&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;We will use weakly informative priors for regression coefficients. By defaults &lt;code&gt;brms&lt;/code&gt; uses robust Student-t prior for model error. &lt;em&gt;Robust&lt;/em&gt; means here robust to potential outliers.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;prior &amp;lt;- prior(normal(0, 10), class = b)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Fitting is quite straigthforward. If your run your model on your laptop with less than 4 cores, it is better to change the value of &lt;code&gt;cores&lt;/code&gt; to 2 or even 1.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# install.packages(&amp;quot;brms&amp;quot;)
-
-fit1 &amp;lt;- 
-  brm(data = Moore,
-      conformity ~ partner.status * fscore_c, ## means partner.status + fscore_c + partner.status:fscore_c
-      prior = prior, sample_prior = T,
-      chains = 4, cores = 4)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;We can start with printing summary of posterior distribution of our model’s coefficients.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fit1 %&amp;gt;% 
-  posterior_summary() %&amp;gt;% 
-  knitr::kable(digits = 2)&lt;/code&gt;&lt;/pre&gt;
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr class=&#34;header&#34;&gt;
-&lt;th&gt;&lt;/th&gt;
-&lt;th align=&#34;right&#34;&gt;Estimate&lt;/th&gt;
-&lt;th align=&#34;right&#34;&gt;Est.Error&lt;/th&gt;
-&lt;th align=&#34;right&#34;&gt;Q2.5&lt;/th&gt;
-&lt;th align=&#34;right&#34;&gt;Q97.5&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td&gt;b_Intercept&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;12.14&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.71&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;10.71&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;13.58&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td&gt;b_partner.status1&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;2.12&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.72&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.74&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;3.52&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td&gt;b_fscore_c&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-0.29&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.72&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-1.73&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;1.12&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td&gt;b_partner.status1:fscore_c&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-1.85&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.72&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-3.25&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-0.41&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td&gt;sigma&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;4.70&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.55&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;3.78&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;5.95&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td&gt;prior_b&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-0.11&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;9.85&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-19.02&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;19.07&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td&gt;prior_sigma&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;11.33&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;13.44&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.36&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;44.93&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td&gt;lp__&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-147.04&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;1.75&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-151.48&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-144.79&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;Compare it to our prior distribution.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;prior_summary(fit1)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##                  prior     class                     coef group resp dpar
-## 1        normal(0, 10)         b                                         
-## 2                              b                 fscore_c                
-## 3                              b          partner.status1                
-## 4                              b partner.status1:fscore_c                
-## 5 student_t(3, 12, 10) Intercept                                         
-## 6  student_t(3, 0, 10)     sigma                                         
-##   nlpar bound
-## 1            
-## 2            
-## 3            
-## 4            
-## 5            
-## 6&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Here we print simple slopes.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;marginal_effects(fit1, &amp;quot;partner.status:fscore_c&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/rmarkdown_files/figure-html/unnamed-chunk-10-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;marginal_effects(fit1, &amp;quot;fscore_c:partner.status&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/rmarkdown_files/figure-html/unnamed-chunk-11-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;We print the results of simple slopes analysis.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;hypothesis(fit1, c(highF=&amp;quot;partner.status1 + partner.status1:fscore_c = 0&amp;quot;,
-                   mediumF=&amp;quot;partner.status1 = 0&amp;quot;,
-                   lowF=&amp;quot;partner.status1 - partner.status1:fscore_c = 0&amp;quot;))&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## Hypothesis Tests for class b:
-##   Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio Post.Prob
-## 1      highF     0.27      1.01    -1.73     2.30      13.80      0.93
-## 2    mediumF     2.12      0.72     0.74     3.52       0.20      0.16
-## 3       lowF     3.98      1.02     1.99     5.98       0.01      0.01
-##   Star
-## 1     
-## 2    *
-## 3    *
-## ---
-## &amp;#39;*&amp;#39;: The expected value under the hypothesis lies outside the 95%-CI.
-## Posterior probabilities of point hypotheses assume equal prior probabilities.&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-</description>
     </item>
     
     <item>
