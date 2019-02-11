@@ -331,7 +331,7 @@ Moderation analysis is one the most widely used tools to approach interactions i
   
   <span class="middot-divider"></span>
   <span class="article-reading-time">
-    4 min read
+    6 min read
   </span>
   
 
@@ -465,11 +465,16 @@ fit1 &lt;-
 <p>We can start with printing summary of posterior distribution of our model’s coefficients.</p>
 <pre class="r"><code>fit1 %&gt;% 
   posterior_summary() %&gt;% 
-  knitr::kable(digits = 2)</code></pre>
+  broom::tidy() %&gt;% 
+  filter(str_detect(.rownames, &quot;^[b|si]&quot;)) %&gt;% 
+  mutate_if(is.numeric, round, digits= 3) %&gt;% 
+  mutate(.rownames = str_replace(.rownames, &quot;^b_&quot;, &quot;&quot;)) %&gt;% 
+  rename(Parameter = .rownames) %&gt;% 
+  knitr::kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
-<th></th>
+<th align="left">Parameter</th>
 <th align="right">Estimate</th>
 <th align="right">Est.Error</th>
 <th align="right">Q2.5</th>
@@ -478,100 +483,227 @@ fit1 &lt;-
 </thead>
 <tbody>
 <tr class="odd">
-<td>b_Intercept</td>
-<td align="right">12.15</td>
-<td align="right">0.70</td>
-<td align="right">10.80</td>
-<td align="right">13.51</td>
+<td align="left">Intercept</td>
+<td align="right">12.132</td>
+<td align="right">0.705</td>
+<td align="right">10.738</td>
+<td align="right">13.517</td>
 </tr>
 <tr class="even">
-<td>b_partner.status1</td>
-<td align="right">2.13</td>
-<td align="right">0.68</td>
-<td align="right">0.83</td>
-<td align="right">3.51</td>
+<td align="left">partner.status1</td>
+<td align="right">2.134</td>
+<td align="right">0.699</td>
+<td align="right">0.743</td>
+<td align="right">3.499</td>
 </tr>
 <tr class="odd">
-<td>b_fscore_c</td>
-<td align="right">-0.28</td>
-<td align="right">0.72</td>
-<td align="right">-1.71</td>
-<td align="right">1.16</td>
+<td align="left">fscore_c</td>
+<td align="right">-0.294</td>
+<td align="right">0.722</td>
+<td align="right">-1.709</td>
+<td align="right">1.147</td>
 </tr>
 <tr class="even">
-<td>b_partner.status1:fscore_c</td>
-<td align="right">-1.85</td>
-<td align="right">0.72</td>
-<td align="right">-3.26</td>
-<td align="right">-0.43</td>
+<td align="left">partner.status1:fscore_c</td>
+<td align="right">-1.862</td>
+<td align="right">0.724</td>
+<td align="right">-3.277</td>
+<td align="right">-0.448</td>
 </tr>
 <tr class="odd">
-<td>sigma</td>
-<td align="right">4.69</td>
-<td align="right">0.53</td>
-<td align="right">3.80</td>
-<td align="right">5.88</td>
-</tr>
-<tr class="even">
-<td>prior_b</td>
-<td align="right">-0.31</td>
-<td align="right">9.92</td>
-<td align="right">-19.64</td>
-<td align="right">19.33</td>
-</tr>
-<tr class="odd">
-<td>prior_sigma</td>
-<td align="right">11.25</td>
-<td align="right">14.57</td>
-<td align="right">0.37</td>
-<td align="right">43.80</td>
-</tr>
-<tr class="even">
-<td>lp__</td>
-<td align="right">-146.95</td>
-<td align="right">1.69</td>
-<td align="right">-151.22</td>
-<td align="right">-144.80</td>
+<td align="left">sigma</td>
+<td align="right">4.689</td>
+<td align="right">0.525</td>
+<td align="right">3.799</td>
+<td align="right">5.849</td>
 </tr>
 </tbody>
 </table>
 <p>Compare it to our prior distribution.</p>
-<pre class="r"><code>prior_summary(fit1)</code></pre>
-<pre><code>##                  prior     class                     coef group resp dpar
-## 1        normal(0, 10)         b                                         
-## 2                              b                 fscore_c                
-## 3                              b          partner.status1                
-## 4                              b partner.status1:fscore_c                
-## 5 student_t(3, 12, 10) Intercept                                         
-## 6  student_t(3, 0, 10)     sigma                                         
-##   nlpar bound
-## 1            
-## 2            
-## 3            
-## 4            
-## 5            
-## 6</code></pre>
-<p>Here we print simple slopes.</p>
+<pre class="r"><code>prior_summary(fit1) %&gt;% 
+  select(prior:coef) %&gt;% 
+  knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">prior</th>
+<th align="left">class</th>
+<th align="left">coef</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">normal(0, 10)</td>
+<td align="left">b</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="left">b</td>
+<td align="left">fscore_c</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="left">b</td>
+<td align="left">partner.status1</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="left">b</td>
+<td align="left">partner.status1:fscore_c</td>
+</tr>
+<tr class="odd">
+<td align="left">student_t(3, 12, 10)</td>
+<td align="left">Intercept</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">student_t(3, 0, 10)</td>
+<td align="left">sigma</td>
+<td align="left"></td>
+</tr>
+</tbody>
+</table>
+<p>To better understand our prior assumptions, it is worth to summarise sampled prior distribution.</p>
+<pre class="r"><code>fit1 %&gt;% 
+  posterior_summary() %&gt;% 
+  broom::tidy() %&gt;% 
+  filter(str_detect(.rownames, &quot;^prior&quot;)) %&gt;% 
+  mutate_if(is.numeric, round, digits= 3) %&gt;% 
+  rename(Parameter = .rownames) %&gt;% 
+  knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Parameter</th>
+<th align="right">Estimate</th>
+<th align="right">Est.Error</th>
+<th align="right">Q2.5</th>
+<th align="right">Q97.5</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">prior_b</td>
+<td align="right">0.164</td>
+<td align="right">9.970</td>
+<td align="right">-19.263</td>
+<td align="right">19.817</td>
+</tr>
+<tr class="even">
+<td align="left">prior_sigma</td>
+<td align="right">10.854</td>
+<td align="right">12.209</td>
+<td align="right">0.339</td>
+<td align="right">40.729</td>
+</tr>
+</tbody>
+</table>
+<p>From the table, we can see that prior to analysing the data we expected regression coefficients to be somewhere between -20 to 20. Similarly, we expected sigma (standard deviation of the regression residuals) to be within a range 0.3 to 40.6.</p>
+<p>Sometimes you may find these prior values unplausible, i.e. too small or too large. In such instance, it is good to repeat the analysis several times, each time with different prior distribution, and examine how this affects your posterior results. This approach is called <code>sensitivity analysis</code>. If the results hold under varying prior choices we may say that it is robust.</p>
+<p>In my field (social psychology), after finding significant interaction, we usually want to understand it’s meaning. This can be approach in two ways.</p>
+<p>The first is graphical analysis and plotting model predictions. In second approach, we test the value of the focal predictor parameter under different values of the moderating variable.</p>
+<p>Lets say we are interested in the effect of partner status (low vs. high) for individuals with varying levels of F scores. We can plot such comparisons for different values of the F score (usually mean and +/- SD, but you can use any reasonable values).</p>
 <pre class="r"><code>marginal_effects(fit1, &quot;partner.status:fscore_c&quot;)</code></pre>
-<p><img src="/post/rmarkdown_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
-<pre class="r"><code>marginal_effects(fit1, &quot;fscore_c:partner.status&quot;)</code></pre>
 <p><img src="/post/rmarkdown_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>In the second approach, we test parameters of partner status for some fixed values of F score. In the table you can find the results. The <code>Star</code> indicates whether 95% credible interval of the sampled distribution does not contain 0. The <code>Evid.Ratio</code> column is Bayes Factor (computed via the Savage-Dickey density ratio method). Here it estimates the strength of evidence that the effect is equal to 0. If you would like to examine the ratio in favor of the alternative hypothesis (the effect is different from 0), you can simply check the revers <code>1/Evid.Ratio</code>. For example, <code>Evid.Ratio</code> of 0.002 indicates that the strength of evidence in favor of alternative hypothesis is equal to 500. The <code>Post.Prob</code> is a probability that the effect is 0. If you would like to calculate probability that the effect is not 0, you can simply calculate <code>1-Post.Prob</code>.</p>
+<pre class="r"><code>ss1 &lt;- hypothesis(fit1, c(high_F_score=&quot;partner.status1 + partner.status1:fscore_c = 0&quot;,
+                   medium_F_score=&quot;partner.status1 = 0&quot;,
+                   low_F_score=&quot;partner.status1 - partner.status1:fscore_c = 0&quot;))
+
+ss1$hypothesis %&gt;% 
+  knitr::kable(digits = 3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Hypothesis</th>
+<th align="right">Estimate</th>
+<th align="right">Est.Error</th>
+<th align="right">CI.Lower</th>
+<th align="right">CI.Upper</th>
+<th align="right">Evid.Ratio</th>
+<th align="right">Post.Prob</th>
+<th align="left">Star</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">high_F_score</td>
+<td align="right">0.272</td>
+<td align="right">0.982</td>
+<td align="right">-1.620</td>
+<td align="right">2.164</td>
+<td align="right">13.785</td>
+<td align="right">0.932</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">medium_F_score</td>
+<td align="right">2.134</td>
+<td align="right">0.699</td>
+<td align="right">0.743</td>
+<td align="right">3.499</td>
+<td align="right">0.190</td>
+<td align="right">0.160</td>
+<td align="left">*</td>
+</tr>
+<tr class="odd">
+<td align="left">low_F_score</td>
+<td align="right">3.996</td>
+<td align="right">1.031</td>
+<td align="right">1.987</td>
+<td align="right">6.096</td>
+<td align="right">0.005</td>
+<td align="right">0.004</td>
+<td align="left">*</td>
+</tr>
+</tbody>
+</table>
+<p>If you would like to find the effect of F score given different values of partner status, the analysis is straightforward.</p>
+<pre class="r"><code>marginal_effects(fit1, &quot;fscore_c:partner.status&quot;)</code></pre>
+<p><img src="/post/rmarkdown_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
 <p>We print the results of simple slopes analysis.</p>
-<pre class="r"><code>hypothesis(fit1, c(highF=&quot;partner.status1 + partner.status1:fscore_c = 0&quot;,
-                   mediumF=&quot;partner.status1 = 0&quot;,
-                   lowF=&quot;partner.status1 - partner.status1:fscore_c = 0&quot;))</code></pre>
-<pre><code>## Hypothesis Tests for class b:
-##   Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio Post.Prob
-## 1      highF     0.28      0.99    -1.68     2.24      13.86      0.93
-## 2    mediumF     2.13      0.68     0.83     3.51       0.13      0.12
-## 3       lowF     3.98      0.99     2.05     5.92       0.00      0.00
-##   Star
-## 1     
-## 2    *
-## 3    *
-## ---
-## &#39;*&#39;: The expected value under the hypothesis lies outside the 95%-CI.
-## Posterior probabilities of point hypotheses assume equal prior probabilities.</code></pre>
+<pre class="r"><code>ss2 &lt;- hypothesis(fit1, c(high_partner_status=&quot;fscore_c + partner.status1:fscore_c = 0&quot;,
+                          low_partner_status=&quot;fscore_c - partner.status1:fscore_c = 0&quot;))
+
+ss2$hypothesis %&gt;% 
+  knitr::kable(digits = 3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Hypothesis</th>
+<th align="right">Estimate</th>
+<th align="right">Est.Error</th>
+<th align="right">CI.Lower</th>
+<th align="right">CI.Upper</th>
+<th align="right">Evid.Ratio</th>
+<th align="right">Post.Prob</th>
+<th align="left">Star</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">high_partner_status</td>
+<td align="right">-2.157</td>
+<td align="right">1.054</td>
+<td align="right">-4.150</td>
+<td align="right">-0.001</td>
+<td align="right">1.571</td>
+<td align="right">0.611</td>
+<td align="left">*</td>
+</tr>
+<tr class="even">
+<td align="left">low_partner_status</td>
+<td align="right">1.568</td>
+<td align="right">0.989</td>
+<td align="right">-0.355</td>
+<td align="right">3.496</td>
+<td align="right">4.325</td>
+<td align="right">0.812</td>
+<td align="left"></td>
+</tr>
+</tbody>
+</table>
 </div>
 
     </div>

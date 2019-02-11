@@ -70,11 +70,16 @@ fit1 &amp;lt;-
 &lt;p&gt;We can start with printing summary of posterior distribution of our model’s coefficients.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fit1 %&amp;gt;% 
   posterior_summary() %&amp;gt;% 
-  knitr::kable(digits = 2)&lt;/code&gt;&lt;/pre&gt;
+  broom::tidy() %&amp;gt;% 
+  filter(str_detect(.rownames, &amp;quot;^[b|si]&amp;quot;)) %&amp;gt;% 
+  mutate_if(is.numeric, round, digits= 3) %&amp;gt;% 
+  mutate(.rownames = str_replace(.rownames, &amp;quot;^b_&amp;quot;, &amp;quot;&amp;quot;)) %&amp;gt;% 
+  rename(Parameter = .rownames) %&amp;gt;% 
+  knitr::kable()&lt;/code&gt;&lt;/pre&gt;
 &lt;table&gt;
 &lt;thead&gt;
 &lt;tr class=&#34;header&#34;&gt;
-&lt;th&gt;&lt;/th&gt;
+&lt;th align=&#34;left&#34;&gt;Parameter&lt;/th&gt;
 &lt;th align=&#34;right&#34;&gt;Estimate&lt;/th&gt;
 &lt;th align=&#34;right&#34;&gt;Est.Error&lt;/th&gt;
 &lt;th align=&#34;right&#34;&gt;Q2.5&lt;/th&gt;
@@ -83,100 +88,227 @@ fit1 &amp;lt;-
 &lt;/thead&gt;
 &lt;tbody&gt;
 &lt;tr class=&#34;odd&#34;&gt;
-&lt;td&gt;b_Intercept&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;12.15&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.70&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;10.80&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;13.51&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Intercept&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;12.132&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.705&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;10.738&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;13.517&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr class=&#34;even&#34;&gt;
-&lt;td&gt;b_partner.status1&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;2.13&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.68&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.83&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;3.51&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;partner.status1&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;2.134&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.699&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.743&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;3.499&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr class=&#34;odd&#34;&gt;
-&lt;td&gt;b_fscore_c&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-0.28&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.72&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-1.71&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;1.16&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;fscore_c&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.294&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.722&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-1.709&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1.147&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr class=&#34;even&#34;&gt;
-&lt;td&gt;b_partner.status1:fscore_c&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-1.85&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.72&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-3.26&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-0.43&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;partner.status1:fscore_c&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-1.862&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.724&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-3.277&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.448&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr class=&#34;odd&#34;&gt;
-&lt;td&gt;sigma&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;4.69&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.53&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;3.80&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;5.88&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td&gt;prior_b&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-0.31&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;9.92&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-19.64&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;19.33&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td&gt;prior_sigma&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;11.25&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;14.57&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;0.37&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;43.80&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td&gt;lp__&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-146.95&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;1.69&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-151.22&lt;/td&gt;
-&lt;td align=&#34;right&#34;&gt;-144.80&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;sigma&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;4.689&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.525&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;3.799&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;5.849&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;p&gt;Compare it to our prior distribution.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;prior_summary(fit1)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##                  prior     class                     coef group resp dpar
-## 1        normal(0, 10)         b                                         
-## 2                              b                 fscore_c                
-## 3                              b          partner.status1                
-## 4                              b partner.status1:fscore_c                
-## 5 student_t(3, 12, 10) Intercept                                         
-## 6  student_t(3, 0, 10)     sigma                                         
-##   nlpar bound
-## 1            
-## 2            
-## 3            
-## 4            
-## 5            
-## 6&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Here we print simple slopes.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;prior_summary(fit1) %&amp;gt;% 
+  select(prior:coef) %&amp;gt;% 
+  knitr::kable()&lt;/code&gt;&lt;/pre&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr class=&#34;header&#34;&gt;
+&lt;th align=&#34;left&#34;&gt;prior&lt;/th&gt;
+&lt;th align=&#34;left&#34;&gt;class&lt;/th&gt;
+&lt;th align=&#34;left&#34;&gt;coef&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;normal(0, 10)&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;b&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;b&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;fscore_c&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;b&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;partner.status1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;b&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;partner.status1:fscore_c&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;student_t(3, 12, 10)&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;Intercept&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;student_t(3, 0, 10)&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;sigma&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;To better understand our prior assumptions, it is worth to summarise sampled prior distribution.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fit1 %&amp;gt;% 
+  posterior_summary() %&amp;gt;% 
+  broom::tidy() %&amp;gt;% 
+  filter(str_detect(.rownames, &amp;quot;^prior&amp;quot;)) %&amp;gt;% 
+  mutate_if(is.numeric, round, digits= 3) %&amp;gt;% 
+  rename(Parameter = .rownames) %&amp;gt;% 
+  knitr::kable()&lt;/code&gt;&lt;/pre&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr class=&#34;header&#34;&gt;
+&lt;th align=&#34;left&#34;&gt;Parameter&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Estimate&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Est.Error&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Q2.5&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Q97.5&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;prior_b&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.164&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;9.970&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-19.263&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;19.817&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;prior_sigma&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;10.854&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;12.209&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.339&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;40.729&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;From the table, we can see that prior to analysing the data we expected regression coefficients to be somewhere between -20 to 20. Similarly, we expected sigma (standard deviation of the regression residuals) to be within a range 0.3 to 40.6.&lt;/p&gt;
+&lt;p&gt;Sometimes you may find these prior values unplausible, i.e. too small or too large. In such instance, it is good to repeat the analysis several times, each time with different prior distribution, and examine how this affects your posterior results. This approach is called &lt;code&gt;sensitivity analysis&lt;/code&gt;. If the results hold under varying prior choices we may say that it is robust.&lt;/p&gt;
+&lt;p&gt;In my field (social psychology), after finding significant interaction, we usually want to understand it’s meaning. This can be approach in two ways.&lt;/p&gt;
+&lt;p&gt;The first is graphical analysis and plotting model predictions. In second approach, we test the value of the focal predictor parameter under different values of the moderating variable.&lt;/p&gt;
+&lt;p&gt;Lets say we are interested in the effect of partner status (low vs. high) for individuals with varying levels of F scores. We can plot such comparisons for different values of the F score (usually mean and +/- SD, but you can use any reasonable values).&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;marginal_effects(fit1, &amp;quot;partner.status:fscore_c&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/rmarkdown_files/figure-html/unnamed-chunk-10-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;marginal_effects(fit1, &amp;quot;fscore_c:partner.status&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;&lt;img src=&#34;/post/rmarkdown_files/figure-html/unnamed-chunk-11-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;In the second approach, we test parameters of partner status for some fixed values of F score. In the table you can find the results. The &lt;code&gt;Star&lt;/code&gt; indicates whether 95% credible interval of the sampled distribution does not contain 0. The &lt;code&gt;Evid.Ratio&lt;/code&gt; column is Bayes Factor (computed via the Savage-Dickey density ratio method). Here it estimates the strength of evidence that the effect is equal to 0. If you would like to examine the ratio in favor of the alternative hypothesis (the effect is different from 0), you can simply check the revers &lt;code&gt;1/Evid.Ratio&lt;/code&gt;. For example, &lt;code&gt;Evid.Ratio&lt;/code&gt; of 0.002 indicates that the strength of evidence in favor of alternative hypothesis is equal to 500. The &lt;code&gt;Post.Prob&lt;/code&gt; is a probability that the effect is 0. If you would like to calculate probability that the effect is not 0, you can simply calculate &lt;code&gt;1-Post.Prob&lt;/code&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;ss1 &amp;lt;- hypothesis(fit1, c(high_F_score=&amp;quot;partner.status1 + partner.status1:fscore_c = 0&amp;quot;,
+                   medium_F_score=&amp;quot;partner.status1 = 0&amp;quot;,
+                   low_F_score=&amp;quot;partner.status1 - partner.status1:fscore_c = 0&amp;quot;))
+
+ss1$hypothesis %&amp;gt;% 
+  knitr::kable(digits = 3)&lt;/code&gt;&lt;/pre&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr class=&#34;header&#34;&gt;
+&lt;th align=&#34;left&#34;&gt;Hypothesis&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Estimate&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Est.Error&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;CI.Lower&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;CI.Upper&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Evid.Ratio&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Post.Prob&lt;/th&gt;
+&lt;th align=&#34;left&#34;&gt;Star&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;high_F_score&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.272&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.982&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-1.620&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;2.164&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;13.785&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.932&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;medium_F_score&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;2.134&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.699&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.743&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;3.499&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.190&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.160&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;*&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;low_F_score&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;3.996&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1.031&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1.987&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;6.096&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.005&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.004&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;*&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;If you would like to find the effect of F score given different values of partner status, the analysis is straightforward.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;marginal_effects(fit1, &amp;quot;fscore_c:partner.status&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/rmarkdown_files/figure-html/unnamed-chunk-13-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;We print the results of simple slopes analysis.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;hypothesis(fit1, c(highF=&amp;quot;partner.status1 + partner.status1:fscore_c = 0&amp;quot;,
-                   mediumF=&amp;quot;partner.status1 = 0&amp;quot;,
-                   lowF=&amp;quot;partner.status1 - partner.status1:fscore_c = 0&amp;quot;))&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## Hypothesis Tests for class b:
-##   Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio Post.Prob
-## 1      highF     0.28      0.99    -1.68     2.24      13.86      0.93
-## 2    mediumF     2.13      0.68     0.83     3.51       0.13      0.12
-## 3       lowF     3.98      0.99     2.05     5.92       0.00      0.00
-##   Star
-## 1     
-## 2    *
-## 3    *
-## ---
-## &amp;#39;*&amp;#39;: The expected value under the hypothesis lies outside the 95%-CI.
-## Posterior probabilities of point hypotheses assume equal prior probabilities.&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;ss2 &amp;lt;- hypothesis(fit1, c(high_partner_status=&amp;quot;fscore_c + partner.status1:fscore_c = 0&amp;quot;,
+                          low_partner_status=&amp;quot;fscore_c - partner.status1:fscore_c = 0&amp;quot;))
+
+ss2$hypothesis %&amp;gt;% 
+  knitr::kable(digits = 3)&lt;/code&gt;&lt;/pre&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr class=&#34;header&#34;&gt;
+&lt;th align=&#34;left&#34;&gt;Hypothesis&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Estimate&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Est.Error&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;CI.Lower&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;CI.Upper&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Evid.Ratio&lt;/th&gt;
+&lt;th align=&#34;right&#34;&gt;Post.Prob&lt;/th&gt;
+&lt;th align=&#34;left&#34;&gt;Star&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class=&#34;odd&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;high_partner_status&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-2.157&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1.054&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-4.150&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.001&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1.571&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.611&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;*&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&#34;even&#34;&gt;
+&lt;td align=&#34;left&#34;&gt;low_partner_status&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;1.568&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.989&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;-0.355&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;3.496&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;4.325&lt;/td&gt;
+&lt;td align=&#34;right&#34;&gt;0.812&lt;/td&gt;
+&lt;td align=&#34;left&#34;&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
 &lt;/div&gt;
 </description>
     </item>
