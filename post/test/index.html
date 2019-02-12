@@ -331,7 +331,7 @@ Moderation analysis is one the most widely used tools to approach interactions i
   
   <span class="middot-divider"></span>
   <span class="article-reading-time">
-    6 min read
+    9 min read
   </span>
   
 
@@ -416,9 +416,40 @@ Moderation analysis is one the most widely used tools to approach interactions i
 <p><em>This post is the first of a series of short tutorials on how to approach statistical analyses common among social psychologist using Bayesian approach and R package - brms</em></p>
 <p>Moderation analysis is one the most widely used tools to approach interactions in regression models with at least 1 continuous term. Its popularity has outbursted since the release of an SPSS/SAS macro <a href="https://www.processmacro.org/">PROCESS</a>. PROCESS is easy to use and allows to fit a variety of models. However, it lacks certain capabilities (like ability to fit multilevel models or generalized regression models or mix of both). Also PROCESS cannot handle Bayesian moderation analysis. One can use <a href="https://jasp-stats.org/">JASP</a> to conduct Baysian regression analysis with interaction terms, but sadly it’s post-processing capabilities are quite limited (at least to me).</p>
 <p>In this post I will show, how to easily and in just a few steps fit Bayesian moderation model in R. As some of my colleagues admitted lack of R package that would replace PROCESS is one of the major factors that restrains them from swapping SPSS with R. Actually there are certain packages that aspire to replace PROCESS in R. Here, however I would to show you that you don’t need to use a specialized package and you can go on with a quite general one - <code>brms</code>.</p>
-<p>Lets start with something relatively simple and easy to follow.</p>
-<div id="continuous-and-categorical-predictors" class="section level2">
-<h2>Continuous and categorical predictors</h2>
+<div id="background" class="section level2">
+<h2>Background</h2>
+<p>First, I will introduce some basic concepts. This is not a formal introduction, it is not systematic or exhaustive. This is just a small recap for those who have already underataken some course on linear models and Bayesian statistics.</p>
+<p>Within the Bayesian approach, we are interested in the so called subjective probability associated with some parameters of interest, given some data that we have observed. For example, how large support a new political party has, given that in some poll 45 participants out of 1000 declared voting for such party. The poll data informs us that it is somewhere around 5%. This subjective probability is called posterior.</p>
+<p>Now lets introduce the essence of Bayesianism. Suppose, that prior to viewing the results of this poll, you saw yet another (conducted rougly in the same week), that gave this new political party a support of 15%. Should you include this prior knowledge when drawing conclusion from the poll that you see now? It is quite natural to update your belief, i.e. if previously the support was 15% and the data indicates 5% the perhaps it is somewhere in the middle (depending on how you weight prior and current knowledge).</p>
+<p>This weighting can be formalized under the infamous Bayes theorem:</p>
+<p><span class="math display">\[p(\theta | \mathcal{D}) \sim p(\mathcal{D}|\theta)\times p(\theta)\]</span>
+Here, <em>posterior</em> <span class="math inline">\(p(\theta)\)</span> refers to our updated beliefs. <span class="math inline">\(p(\theta)\)</span> refers to our prior beliefs, hence it is called <em>prior</em>. <span class="math inline">\(p(\mathcal{D}|\theta)\)</span> is the part where updating takes part, it associated with new information and it is called <em>likelihood</em>. <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\mathcal{D}\)</span> refer to parameter values and data respectively.</p>
+<p>In the context of linear regression (either with or without interaction terms).</p>
+<p><span class="math display">\[p(\theta | y, X) \sim p(y | \theta, X) \times p(\theta)\]</span></p>
+<p><span class="math inline">\(\theta\)</span> refers here to all parameters that are included in the model, i.e. regression coefficients and model error, lets write them as <span class="math inline">\(\theta = (\beta, \sigma)\)</span>. <span class="math inline">\(y\)</span> is our outcome variable and <span class="math inline">\(X\)</span> is our model design matrix. Lets examine how <span class="math inline">\(X\)</span> looks like in the case of moderation analysis (i.e. regression with interaction). Lets say that for each individual, we obtained measures of two variable each valued either <span class="math inline">\(-2\)</span> or <span class="math inline">\(2\)</span>. Suppose we have 4 individals with all possible combinations of the variables. Our design matrix is then:</p>
+<p><span class="math display">\[X = \begin{bmatrix}
+      1 &amp; -2 &amp; -2 &amp;  4 \\
+      1 &amp; -2 &amp;  2 &amp; -4 \\
+      1 &amp;  2 &amp; -2 &amp; -4 \\
+      1 &amp;  2 &amp;  2 &amp;  4
+      \end{bmatrix}
+\]</span></p>
+<p>The first colum refers to our regression intercept, it is just a column of ones. We put values of our variables in column 2 and 3. The fourth column refers to our interaction term. It is construed for each individual by multiplying values of the two observed variables, e.g. <span class="math inline">\(-2 \times 2 = -4\)</span>. Each column has its regression coefficient.</p>
+<p>Now, we can write our regression equation (using matrix notation) as:</p>
+<p><span class="math display">\[y = X\beta + \epsilon\]</span></p>
+<p>Or:</p>
+<p><span class="math display">\[y = \mathcal{N}(X\beta,\ \sigma)\]</span></p>
+<p>Where <span class="math inline">\(\sigma = \sqrt{Var(\epsilon)}\)</span> and <span class="math inline">\(\mathcal{N}\)</span> means that we assume residuals to be distributed as Normal (later I will show how we can modify this assumption) with mean equal to <span class="math inline">\(X\beta\)</span> and standard deviation equal to <span class="math inline">\(\sigma\)</span>.</p>
+<p>Without matrix notation, we would write an equation with interaction as:</p>
+<p><span class="math display">\[y_i = \hat{y_i} + \epsilon_i\]</span></p>
+<p><span class="math display">\[\hat{y_i} = \beta_1 + \beta_2x_{i2} + \beta_3x_{i3} + \beta_4x_{i2}x_{i3}\]</span></p>
+<p>Lets reframe this equation:</p>
+<p><span class="math display">\[\hat{y_i} = (\beta_1 + \beta_3x_{i3}) + (\beta_2 + \beta_4x_{i3})x_{i2}\]</span></p>
+<p>By grouping the terms under parentheses we obtained a simple regression equation, which shows us that effect of <span class="math inline">\(x_2\)</span> (focal predictor) on <span class="math inline">\(y\)</span> (i.e. the line slope and intercept) depends on the values of <span class="math inline">\(x_3\)</span> (moderator). We will use this fact later when we will conduct simple slope analysis.</p>
+</div>
+<div id="example" class="section level2">
+<h2>Example</h2>
+<p>Now, Lets start with something relatively simple and easy to follow.</p>
 <p>In this post I will extensively use <code>tidyverse</code>.</p>
 <pre class="r"><code># install.packages(&quot;tidyverse&quot;)
 # install.packages(&quot;carData&quot;)
@@ -484,38 +515,38 @@ fit1 &lt;-
 <tbody>
 <tr class="odd">
 <td align="left">Intercept</td>
-<td align="right">12.132</td>
-<td align="right">0.705</td>
-<td align="right">10.738</td>
-<td align="right">13.517</td>
+<td align="right">12.141</td>
+<td align="right">0.712</td>
+<td align="right">10.681</td>
+<td align="right">13.606</td>
 </tr>
 <tr class="even">
 <td align="left">partner.status1</td>
-<td align="right">2.134</td>
-<td align="right">0.699</td>
-<td align="right">0.743</td>
-<td align="right">3.499</td>
+<td align="right">2.132</td>
+<td align="right">0.709</td>
+<td align="right">0.785</td>
+<td align="right">3.550</td>
 </tr>
 <tr class="odd">
 <td align="left">fscore_c</td>
-<td align="right">-0.294</td>
-<td align="right">0.722</td>
-<td align="right">-1.709</td>
-<td align="right">1.147</td>
+<td align="right">-0.289</td>
+<td align="right">0.709</td>
+<td align="right">-1.688</td>
+<td align="right">1.073</td>
 </tr>
 <tr class="even">
 <td align="left">partner.status1:fscore_c</td>
-<td align="right">-1.862</td>
-<td align="right">0.724</td>
-<td align="right">-3.277</td>
-<td align="right">-0.448</td>
+<td align="right">-1.851</td>
+<td align="right">0.716</td>
+<td align="right">-3.292</td>
+<td align="right">-0.435</td>
 </tr>
 <tr class="odd">
 <td align="left">sigma</td>
-<td align="right">4.689</td>
-<td align="right">0.525</td>
-<td align="right">3.799</td>
-<td align="right">5.849</td>
+<td align="right">4.703</td>
+<td align="right">0.549</td>
+<td align="right">3.797</td>
+<td align="right">5.905</td>
 </tr>
 </tbody>
 </table>
@@ -585,17 +616,17 @@ fit1 &lt;-
 <tbody>
 <tr class="odd">
 <td align="left">prior_b</td>
-<td align="right">0.164</td>
-<td align="right">9.970</td>
-<td align="right">-19.263</td>
-<td align="right">19.817</td>
+<td align="right">-0.264</td>
+<td align="right">10.137</td>
+<td align="right">-20.094</td>
+<td align="right">19.251</td>
 </tr>
 <tr class="even">
 <td align="left">prior_sigma</td>
-<td align="right">10.854</td>
-<td align="right">12.209</td>
-<td align="right">0.339</td>
-<td align="right">40.729</td>
+<td align="right">10.826</td>
+<td align="right">11.872</td>
+<td align="right">0.354</td>
+<td align="right">42.077</td>
 </tr>
 </tbody>
 </table>
@@ -629,32 +660,32 @@ ss1$hypothesis %&gt;%
 <tbody>
 <tr class="odd">
 <td align="left">high_F_score</td>
-<td align="right">0.272</td>
-<td align="right">0.982</td>
-<td align="right">-1.620</td>
-<td align="right">2.164</td>
-<td align="right">13.785</td>
-<td align="right">0.932</td>
+<td align="right">0.282</td>
+<td align="right">1.010</td>
+<td align="right">-1.677</td>
+<td align="right">2.271</td>
+<td align="right">14.145</td>
+<td align="right">0.934</td>
 <td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">medium_F_score</td>
-<td align="right">2.134</td>
-<td align="right">0.699</td>
-<td align="right">0.743</td>
-<td align="right">3.499</td>
-<td align="right">0.190</td>
-<td align="right">0.160</td>
+<td align="right">2.132</td>
+<td align="right">0.709</td>
+<td align="right">0.785</td>
+<td align="right">3.550</td>
+<td align="right">0.243</td>
+<td align="right">0.195</td>
 <td align="left">*</td>
 </tr>
 <tr class="odd">
 <td align="left">low_F_score</td>
-<td align="right">3.996</td>
-<td align="right">1.031</td>
-<td align="right">1.987</td>
-<td align="right">6.096</td>
-<td align="right">0.005</td>
-<td align="right">0.004</td>
+<td align="right">3.983</td>
+<td align="right">1.006</td>
+<td align="right">2.091</td>
+<td align="right">5.969</td>
+<td align="right">0.014</td>
+<td align="right">0.014</td>
 <td align="left">*</td>
 </tr>
 </tbody>
@@ -684,22 +715,22 @@ ss2$hypothesis %&gt;%
 <tbody>
 <tr class="odd">
 <td align="left">high_partner_status</td>
-<td align="right">-2.157</td>
-<td align="right">1.054</td>
-<td align="right">-4.150</td>
-<td align="right">-0.001</td>
-<td align="right">1.571</td>
-<td align="right">0.611</td>
+<td align="right">-2.139</td>
+<td align="right">1.053</td>
+<td align="right">-4.230</td>
+<td align="right">-0.072</td>
+<td align="right">1.828</td>
+<td align="right">0.646</td>
 <td align="left">*</td>
 </tr>
 <tr class="even">
 <td align="left">low_partner_status</td>
-<td align="right">1.568</td>
-<td align="right">0.989</td>
-<td align="right">-0.355</td>
-<td align="right">3.496</td>
-<td align="right">4.325</td>
-<td align="right">0.812</td>
+<td align="right">1.562</td>
+<td align="right">0.960</td>
+<td align="right">-0.351</td>
+<td align="right">3.442</td>
+<td align="right">3.828</td>
+<td align="right">0.793</td>
 <td align="left"></td>
 </tr>
 </tbody>
